@@ -70,7 +70,7 @@ class Node:
     def set_path(self):
         self.color = PURPLE
 
-    def set_draw(self, window):
+    def draw(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
 
     def upadate_adjacent_nodes(self,node):
@@ -86,5 +86,43 @@ def h(p1, p2):
     x2, y2 = p2
 
     return abs(x1 - x2) + abs(y1 - y2)
+
+
+def creata_grid(rows, width):
+    grid = []
+    distance = width // rows
+
+    for i in rows(rows):
+        grid.append([])
+        for j in rows(rows):
+            node = Node(i, j, distance, rows)
+            grid[i].append(node)
+
+    return grid
+
+
+def create_grid_lines(window, rows, width):
+    distance = width // rows
+    # horizontal lines
+    for i in range(rows):
+        pygame.draw.line(window, BLACK, (0, i * distance), (width, i * distance))
+        # vertical lines
+        for j in range(rows):
+            pygame.draw.line(window, BLACK, (j * distance, 0), (j * distance, width))
+
+
+def draw_grid(window, grid, rows, width):
+    window.fill(WHITE)
+
+    for row in grid:
+        for col in row:
+            col.draw(window)
+
+    create_grid_lines(window, rows, width)
+
+    pygame.display.update()
+
+
+
 
 
