@@ -55,6 +55,9 @@ class Node:
     def reset_color(self):
         return self.color == WHITE
 
+    def set_to_start(self):
+        self.color = ORANGE
+
     def set_to_closed(self):
         self.color = RED
 
@@ -88,15 +91,15 @@ def h(p1, p2):
     return abs(x1 - x2) + abs(y1 - y2)
 
 
-def creata_grid(rows, width):
+def creata_grid(rows, width): # make grid
     grid = []
     distance = width // rows
 
-    for i in rows(rows):
+    for i in range(rows):
         grid.append([])
-        for j in rows(rows):
-            node = Node(i, j, distance, rows)
-            grid[i].append(node)
+        for j in range(rows):
+            spot = Node(i, j, distance, rows)
+            grid[i].append(spot)
 
     return grid
 
@@ -119,10 +122,53 @@ def draw_grid(window, grid, rows, width):
             col.draw(window)
 
     create_grid_lines(window, rows, width)
-
     pygame.display.update()
 
 
+def get_clicked_position(pos, rows, width):
+    y, x = pos
+    distance = width // rows
+    row = y // distance
+    col = x // distance
+
+    return row, col
 
 
+def visualiser(window, width):
+    ROWS = 50
+    grid = creata_grid(ROWS, width)
 
+    start = None
+    end = None
+
+    run = True
+    started = False
+
+    while run:
+        draw_grid(window,grid, ROWS, width)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if started:
+                continue
+            if pygame.mouse.get_pressed()[0]:
+                pos = pygame.mouse.get_pos()
+                row, col = get_clicked_position(pos, ROWS, width)
+                spot = grid[row][col]
+                if not start and spot != end:
+                    start = spot
+                    start.set_to_start()
+
+                elif not end and spot != start:
+                    end = spot
+                    end.set_to_end()
+
+                elif spot != start or spot != end:
+                    spot.set_to_barrier()
+
+            elif pygame.mouse.get_pressed()[2]:
+                pass
+    #pygame.quit()
+
+
+visualiser(WIN, WINDOW_LEN)
