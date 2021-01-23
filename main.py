@@ -1,10 +1,4 @@
-# This is a sample Python script.
-
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
 import pygame
-import math
 from queue import PriorityQueue
 
 WINDOW_LEN = 800
@@ -38,10 +32,10 @@ class Node:
         return self.row, self.col
 
     def is_closed(self):
-        return self.color == RED
+        return self.color == YELLOW
 
     def is_open(self):
-        return self.color == GREEN
+        return self.color == RED
 
     def is_barrier(self):
         return self.color == BLACK
@@ -50,7 +44,7 @@ class Node:
         return self.color == ORANGE
 
     def is_end(self):
-        return self.color == TURQUOISE
+        return self.color == PURPLE
 
     def reset_color(self):
         self.color = WHITE
@@ -59,19 +53,19 @@ class Node:
         self.color = ORANGE
 
     def set_to_open(self):
-        self.color = GREEN
+        self.color = RED
 
     def set_to_closed(self):
-        self.color = RED
+        self.color = YELLOW
 
     def set_to_barrier(self):
         self.color = BLACK
 
     def set_to_end(self):
-        self.color = TURQUOISE
+        self.color = PURPLE
 
     def set_path(self):
-        self.color = PURPLE
+        self.color = GREEN
 
     def draw(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
@@ -90,7 +84,7 @@ class Node:
         # left
         if self.col > 0 and not node[self.row][self.col - 1].is_barrier():
             self.adjacent_nodes.append(node[self.row][self.col - 1])
-        
+
     def __lt__(self, other):
         return False
 
@@ -197,20 +191,20 @@ def get_clicked_position(pos, rows, width):
 
 
 def visualiser(window, width):
-    ROWS = 50
-    node = create_grid(ROWS, width)
+    rows = 50
+    node = create_grid(rows, width)
     start = None
     end = None
     run = True
 
     while run:
-        draw_grid(window, node, ROWS, width)
+        draw_grid(window, node, rows, width)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
             if pygame.mouse.get_pressed()[0]:
                 pos = pygame.mouse.get_pos()
-                row, col = get_clicked_position(pos, ROWS, width)
+                row, col = get_clicked_position(pos, rows, width)
                 spot = node[row][col]
                 if not start and spot != end:
                     start = spot
@@ -225,7 +219,7 @@ def visualiser(window, width):
 
             elif pygame.mouse.get_pressed()[2]:
                 pos = pygame.mouse.get_pos()
-                row, col = get_clicked_position(pos, ROWS, width)
+                row, col = get_clicked_position(pos, rows, width)
                 spot = node[row][col]
                 spot.reset()
 
@@ -239,13 +233,12 @@ def visualiser(window, width):
                     for row in node:
                         for spot in row:
                             spot.update_adjacent_nodes(node)
-                    a_star(lambda: draw_grid(window, node, ROWS, width), node, start, end)
+                    a_star(lambda: draw_grid(window, node, rows, width), node, start, end)
 
                 if event.key == pygame.K_r:
                     start = None
                     end = None
-                    node = create_grid(ROWS, width)
-
+                    node = create_grid(rows, width)
 
     pygame.quit()
 
