@@ -18,7 +18,7 @@ YELLOW = (255, 255, 0)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 PURPLE = (128, 0, 128)
-ORANGE = ( 255, 127, 0)
+ORANGE = (255, 127, 0)
 GREY = (128, 128, 128)
 TURQUOISE = (64, 224, 208)
 
@@ -31,7 +31,7 @@ class Node:
         self.total_rows = total_rows
         self.x = row * width
         self.y = col * width
-        self.color = WHITE # at the beginning all nodes are white
+        self.color = WHITE  # at the beginning all nodes are white
         self.adjacent_nodes = []
 
     def get_pos(self):
@@ -58,11 +58,11 @@ class Node:
     def set_to_start(self):
         self.color = ORANGE
 
-    def set_to_closed(self):
-        self.color = RED
-
     def set_to_open(self):
         self.color = GREEN
+
+    def set_to_closed(self):
+        self.color = RED
 
     def set_to_barrier(self):
         self.color = BLACK
@@ -76,7 +76,7 @@ class Node:
     def draw(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
 
-    def upadate_adjacent_nodes(self,node):
+    def update_adjacent_nodes(self, node):
         self.adjacent_nodes = []
         # down
         if self.row < self.total_rows - 1 and not node[self.row + 1][self.col].is_barrier():
@@ -85,17 +85,17 @@ class Node:
         if self.row > 0 and not node[self.row - 1][self.col].is_barrier():
             self.adjacent_nodes.append(node[self.row - 1][self.col])
         # right
-        if self.row < self.total_rows - 1 and not node[self.row][self.col + 1].is_barrier():
+        if self.col < self.total_rows - 1 and not node[self.row][self.col + 1].is_barrier():
             self.adjacent_nodes.append(node[self.row][self.col + 1])
         # left
-        if self.row > 0 and not node[self.row][self.col - 1].is_barrier():
+        if self.col > 0 and not node[self.row][self.col - 1].is_barrier():
             self.adjacent_nodes.append(node[self.row][self.col - 1])
-
+        
     def __lt__(self, other):
         return False
 
 
-# heurestic function
+# heuristic function
 def h(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
@@ -103,7 +103,57 @@ def h(p1, p2):
     return abs(x1 - x2) + abs(y1 - y2)
 
 
-def creata_grid(rows, width):
+def show_path(came_from, current, draw):
+    while current in came_from:
+        current = came_from[current]
+        current.set_path()
+        draw()
+
+
+def a_star(draw, node, start, end):
+    count = 0
+    open_set = PriorityQueue()
+    open_set.put((0, count, start))
+    came_from = {}
+    g_score = {spot: float("inf") for row in node for spot in row}
+    g_score[start] = 0
+    f_score = {spot: float("inf") for row in node for spot in row}
+    f_score[start] = h(start.get_pos(), end.get_pos())
+
+    open_set_hash = {start}
+    while not open_set.empty():
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+        current = open_set.get()[2]
+        open_set_hash.remove(current)
+
+        if current == end:
+            show_path(came_from, end, draw)
+            end.set_to_end()
+            return True
+
+        for adjacent in current.adjacent_nodes:
+            temp_g_score = g_score[current] + 1
+
+            if temp_g_score < g_score[adjacent]:
+                came_from[adjacent] = current
+                g_score[adjacent] = temp_g_score
+                f_score[adjacent] = temp_g_score + h(adjacent.get_pos(), end.get_pos())
+                if adjacent not in open_set_hash:
+                    count += 1
+                    open_set.put((f_score[adjacent], count, adjacent))
+                    open_set_hash.add(adjacent)
+                    adjacent.set_to_open()
+
+        draw()
+        if current != start:
+            current.set_to_closed()
+    return False
+
+
+def create_grid(rows, width):
     grid = []
     distance = width // rows
 
@@ -148,25 +198,20 @@ def get_clicked_position(pos, rows, width):
 
 def visualiser(window, width):
     ROWS = 50
-    grid = creata_grid(ROWS, width)
-
+    node = create_grid(ROWS, width)
     start = None
     end = None
-
     run = True
-    started = False
 
     while run:
-        draw_grid(window,grid, ROWS, width)
+        draw_grid(window, node, ROWS, width)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            if started:
-                continue
             if pygame.mouse.get_pressed()[0]:
                 pos = pygame.mouse.get_pos()
                 row, col = get_clicked_position(pos, ROWS, width)
-                spot = grid[row][col]
+                spot = node[row][col]
                 if not start and spot != end:
                     start = spot
                     start.set_to_start()
@@ -181,7 +226,7 @@ def visualiser(window, width):
             elif pygame.mouse.get_pressed()[2]:
                 pos = pygame.mouse.get_pos()
                 row, col = get_clicked_position(pos, ROWS, width)
-                spot = grid[row][col]
+                spot = node[row][col]
                 spot.reset()
 
                 if spot == start:
@@ -191,9 +236,16 @@ def visualiser(window, width):
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and start and end:
-                    for row in grid:
+                    for row in node:
                         for spot in row:
-                            spot.upadate_adjacent_nodes(grid)
+                            spot.update_adjacent_nodes(node)
+                    a_star(lambda: draw_grid(window, node, ROWS, width), node, start, end)
+
+                if event.key == pygame.K_r:
+                    start = None
+                    end = None
+                    node = create_grid(ROWS, width)
+
 
     pygame.quit()
 
