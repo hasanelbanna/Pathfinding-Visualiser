@@ -53,7 +53,7 @@ class Node:
         return self.color == TURQUOISE
 
     def reset_color(self):
-        return self.color == WHITE
+        self.color = WHITE
 
     def set_to_start(self):
         self.color = ORANGE
@@ -77,7 +77,19 @@ class Node:
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
 
     def upadate_adjacent_nodes(self,node):
-        pass
+        self.adjacent_nodes = []
+        # down
+        if self.row < self.total_rows - 1 and not node[self.row + 1][self.col].is_barrier():
+            self.adjacent_nodes.append(node[self.row + 1][self.col])
+        # up
+        if self.row > 0 and not node[self.row - 1][self.col].is_barrier():
+            self.adjacent_nodes.append(node[self.row - 1][self.col])
+        # right
+        if self.row < self.total_rows - 1 and not node[self.row][self.col + 1].is_barrier():
+            self.adjacent_nodes.append(node[self.row][self.col + 1])
+        # left
+        if self.row > 0 and not node[self.row][self.col - 1].is_barrier():
+            self.adjacent_nodes.append(node[self.row][self.col - 1])
 
     def __lt__(self, other):
         return False
@@ -91,7 +103,7 @@ def h(p1, p2):
     return abs(x1 - x2) + abs(y1 - y2)
 
 
-def creata_grid(rows, width): # make grid
+def creata_grid(rows, width):
     grid = []
     distance = width // rows
 
@@ -163,12 +175,27 @@ def visualiser(window, width):
                     end = spot
                     end.set_to_end()
 
-                elif spot != start or spot != end:
+                elif spot != start and spot != end:
                     spot.set_to_barrier()
 
             elif pygame.mouse.get_pressed()[2]:
-                pass
-    #pygame.quit()
+                pos = pygame.mouse.get_pos()
+                row, col = get_clicked_position(pos, ROWS, width)
+                spot = grid[row][col]
+                spot.reset()
+
+                if spot == start:
+                    start = None
+                elif spot == end:
+                    end = None
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and start and end:
+                    for row in grid:
+                        for spot in row:
+                            spot.upadate_adjacent_nodes(grid)
+
+    pygame.quit()
 
 
 visualiser(WIN, WINDOW_LEN)
